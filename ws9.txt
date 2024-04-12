@@ -1,0 +1,876 @@
+# slr parsing
+
+from collections import defaultdict
+from prettytable import PrettyTable
+
+def slr(s, parsing_table, n_nt, stack, action_l):
+
+    table = PrettyTable()
+    table.field_names = ["Stack", "Action", "Input String"]
+
+    while len(s):
+        action = parsing_table[stack[-1]][s[0]]
+
+        if action == "ACCEPT":
+            action_l.append(action)
+            print("-> ACCEPTED")
+            break
+        if action == "-":
+            action_l.append("not accepted")
+            print("-> REJECTED")
+            break
+
+        s_shift = action.split(":")
+        action_l.append(s_shift[0] + " " + s_shift[1])
+
+        if s_shift[0] == "Shift":
+            stack.append(s[0])
+            stack.append(s_shift[1])
+            s = s[1:]
+        elif s_shift[0] == "Reduce":
+            s_reduce = s_shift[1].split("->")
+            replace_string = ""
+            stack_replace_string = ""
+
+            for i in range(len(stack) - 1, 0, -1):
+                stack_replace_string += stack[i]
+                if stack[i] in n_nt:
+                    replace_string += stack[i]
+
+                rev_s = replace_string[::-1]
+                if rev_s == s_reduce[1]:
+                    break
+
+            for i in range(len(stack_replace_string)):
+                stack.pop()
+            stack.append(s_reduce[0])
+            stack.append(parsing_table[stack[-2]][stack[-1]])
+
+        table.add_row(["".join(stack), action_l[-1], s])
+    print("\n\nPARSING TABLE\n")
+    print(table)
+
+with open("slr_table.txt",'r') as file:
+    f=file.readlines()
+
+parsing_table = defaultdict(dict)
+n_nt = []
+
+for line in f:
+    x = line.strip('\n')
+    y = x.split()
+    if y[0] == "states":
+        n_nt = y[1:]
+        print(n_nt)
+        continue
+    for i in range(len(n_nt)):
+        parsing_table[y[0]][n_nt[i]] = y[i + 1]
+
+
+
+s = input("Enter input string: ")
+s += "$"
+stack = ['0']
+action_l = []
+slr(s, parsing_table, n_nt,stack,action_l)
+
+#i+i*i
+
+
+# Three address code - QUADRUPLES
+
+from prettytable import PrettyTable
+
+exp = input("Enter arithmetic expression with appropriate brackets: ")
+print("\nARITHMETIC EXPRESSION: ", exp)
+
+operators=['*','+','-','/']
+asg = exp[0]
+stack = []
+
+
+#print("ASG: ", asg)
+#print("EXP: ", exp)
+
+int_code = {}
+count = 0
+
+for i in range(len(exp)):
+    if exp[i] == ')':
+        s = ''
+        while stack[-1] != '(':
+            s = stack.pop()+s
+        stack.pop()  # Remove the '('
+
+        count += 1
+        temp_var = 'T' + str(count)
+        int_code[temp_var] = s
+        stack.append(temp_var)
+    else:
+        stack.append(exp[i])
+
+int_code[asg]='T'+str(count)
+
+print("\n\nFinal Three Address Code:\n")
+for key, value in int_code.items():
+    print(key, '=', value)
+
+op=[]
+arg1=[]
+arg2=[]
+res=[]
+print("\n\nQUADRAPLES\n")
+for k,v in int_code.items():
+
+  if v[0]=='-':
+    op.append(v[0])
+    arg1.append(v[1:])
+    arg2.append('-')
+    res.append(k)
+  else:
+    flag=0
+    for i in operators:
+      if i in v:
+        flag=1
+        ind=v.index(i)
+        op.append(v[ind])
+        arg1.append(v[0:ind])
+        arg2.append(v[ind+1:])
+        res.append(k)
+        break
+    if flag==0:
+      op.append('=')
+      arg1.append(v)
+      arg2.append('-')
+      res.append(k)
+
+table=PrettyTable(['OPERATOR','ARG1','ARG2','RESULT'])
+
+for i in range(len(op)):
+  table.add_row([''.join(op[i]),''.join(arg1[i]),''.join(arg2[i]),''.join(res[i])])
+
+print(table)
+
+#A=((A+(B*C))-D)
+#A=((-B)+(C*D))
+
+# Three address code - TRIPLES
+
+from prettytable import PrettyTable
+
+exp = input("Enter arithmetic expression with appropriate brackets: ")
+print("\nARITHMETIC EXPRESSION: ", exp)
+
+operators=['*','+','-','/']
+asg = exp[0]
+stack = []
+
+#print("ASG: ", asg)
+#print("EXP: ", exp)
+
+int_code = {}
+count = 0
+
+for i in range(len(exp)):
+    if exp[i] == ')':
+        s = ''
+        while stack[-1] != '(':
+            s = stack.pop()+s
+        stack.pop()  # To Remove '('
+
+        count += 1
+        temp_var ='('+ str(count)+')'
+        int_code[temp_var] = s
+        stack.append(temp_var)
+    else:
+        stack.append(exp[i])
+
+int_code[asg]='('+ str(count)+')'
+
+print("\n\nFinal Three Address Code:\n")
+for key, value in int_code.items():
+    print(key, '=', value)
+
+op=[]
+arg1=[]
+arg2=[]
+
+print("\nTRIPLES\n")
+for k,v in int_code.items():
+
+  if v[0]=='-':
+    op.append(v[0])
+    arg1.append(v[1:])
+    arg2.append('-')
+  else:
+    flag=0
+    for i in operators:
+      if i in v:
+        flag=1
+        ind=v.index(i)
+        op.append(v[ind])
+        arg1.append(v[0:ind])
+        arg2.append(v[ind+1:])
+        break
+    if flag==0:
+      op.append('=')
+      arg1.append(k)
+      arg2.append(v)
+
+table=PrettyTable(['OPERATOR','ARG1','ARG2'])
+
+for i in range(len(op)):
+  table.add_row([''.join(op[i]),''.join(arg1[i]),''.join(arg2[i])])
+
+print(table)
+
+
+#A=((A+(B*C))-D)
+#A=((-B)+(C*D))
+
+# harini code for slr
+from collections import defaultdict
+states=defaultdict(list)
+first_dict=defaultdict(list)
+follow_dict=defaultdict(list)
+goto_table=defaultdict(dict)
+slr_table=defaultdict(dict)
+
+def first(gram):
+  new=defaultdict(list)
+  for k,v in gram.items():
+    for i in v:
+      if not i[0].isupper():
+        new[k].append(i[0])
+      else:
+        if i[0] in new:
+          new[k].extend(new[i[0]])
+  return new
+
+def findFollow(start, grammar, first):
+  res = defaultdict(list)
+  res[start] = ["$"]
+  tobeDone = []
+  for each in grammar:
+    for prod in grammar[each]:
+      i = 0
+      while i < len(prod):
+        if prod[i].isupper():
+          if i+1<len(prod):
+            if not prod[i+1].isupper():
+              res[prod[i]].append(prod[i+1])
+              res[prod[i]] = list(set(res[prod[i]]))
+            else:
+              res[prod[i]].extend(first[prod[i+1]])
+              res[prod[i]] = list(set(res[prod[i]]))
+              if "╬╡" in first[prod[i+1]]:
+                if each in res:
+                  res[prod[i]].extend(res[each])
+                  res[prod[i]] = list(set(res[prod[i]]))
+                  tobeDone.append([each, prod[i]])
+          else:
+            if each in res:
+              res[prod[i]].extend(res[each])
+              res[prod[i]] = list(set(res[prod[i]]))
+              tobeDone.append([each, prod[i]])
+        i+=1
+  for each_key in tobeDone:
+    res[each_key[1]].extend(res[each_key[0]])
+    res[each_key[1]] = list(set(res[each_key[1]]))
+    if "╬╡" in res[each_key[1]]:
+      res[each_key[1]].remove("╬╡")
+  return res
+
+def closure(productions):
+  i=0
+  while i < len(productions):
+      prd=productions[i]
+      i+=1
+      split=prd.split("->")
+      rhs=split[1]
+      if "." in rhs:
+        dot_index=rhs.index(".")
+        #checking whether the symbol after . is non terminal
+        if dot_index+1 < len(rhs) and rhs[dot_index+1] in non_terminals:
+          nonterm=rhs[dot_index+1]
+          #prod starting from that non term
+          for prod_rhs in prod[nonterm]:
+            prod_new = nonterm+"->."+prod_rhs
+            if prod_new not in productions:
+              productions.append(prod_new)
+  return productions
+
+def goto(item, gram_symbol):
+    productions=[]
+    #finding the production for which the closure is to be found
+    for production in item:
+       split=production.split("->")
+       rhs=split[1]
+       if "." in rhs:
+         dot_index=rhs.index(".")
+         if dot_index+1 < len(rhs) and rhs[dot_index+1]==gram_symbol:
+            new_production=production.replace("."+gram_symbol,gram_symbol+".")
+            productions.append(new_production)
+    if len(productions)>0:
+      return closure(productions)
+    return productions
+
+def lritems():
+  #finding closure of first augumented prod
+  aug_gram_start=aug_gram.replace("->","->.")
+  c=closure([aug_gram_start])
+  states["0"]=c
+  i=0
+  while i < len(states.keys()):
+      item = states[str(i)]
+      symbols = []
+      symbols.extend(non_terminals)
+      symbols.extend(terminals)
+      #along with item each non terminal and terminals passed in goto
+      for sym in symbols:
+        goto_list = goto(item,sym)
+        goto_table[str(i)][sym]="-"
+        #finding next state number
+        if len(goto_list)>0 and  goto_list not in list(states.values()):
+          state_no=len(states.keys())
+          states[str(state_no)]=goto_list
+        if len(goto_list)>0:
+          state_no_goto_list=str(list(states.values()).index(goto_list))
+          print("goto(",str(i),",",sym,")  ---------  ",state_no_goto_list," ----- ",goto_list)
+          goto_table[str(i)][sym]=state_no_goto_list
+      i+=1
+  print("\nLR() ITEMS: ")
+  #PRINTING LR ITEMS
+  for state in states:
+    print(state,"---------",states[state])
+
+def find_slr_table():
+    for state in states:
+      #initializing the table
+      for i in terminals:
+        slr_table[state][i]="-"
+      slr_table[state]["$"]="-"
+      for i in non_terminals:
+        slr_table[state][i]="-"
+
+      for item in states[state]:
+          split=item.split("->")
+          lhs=split[0]
+          rhs=split[1]
+          if "." in rhs:
+            dot_index=rhs.index(".")
+            if dot_index+1 < len(rhs):
+                #A->a.Bbeta ------ from item with nonterm B going to which state j
+               if rhs[dot_index+1] in non_terminals:
+                  nonterm=rhs[dot_index+1]
+                  slr_table[state][nonterm] = goto_table[state][nonterm]
+                #A->a.abeta ------ from item with term a ----- shift j
+               elif rhs[dot_index+1] in terminals:
+                  term=rhs[dot_index+1]
+                  if goto_table[state][term]:
+                    slr_table[state][term] ="Shift:"+goto_table[state][term]
+            #A->a.
+            if dot_index+1==len(rhs):
+              #augumented gram
+              if item == aug_gram+".":
+                slr_table[state]["$"]="ACCEPT"
+              #reduce
+              else:
+                for follow in follow_dict[lhs]:
+                  slr_table[state][follow]="Reduce:"+item.replace(".","")
+
+
+prod=defaultdict(list)
+start_symbol = 'S'
+start_dash = start_symbol+"'"
+aug_gram = start_dash+"->"+start_symbol
+productions = {'S': ['CC'], 'C': ['cC', 'd']}
+prod[start_dash] = start_symbol
+prod.update(productions)
+terminals = ['c', 'd']
+non_terminals = ['S', 'C']
+"""start_symbol = 'E'
+start_dash = start_symbol+"'"
+aug_gram = start_dash+"->"+start_symbol
+productions = {'E': ['E+T', 'T'], 'T': ['T*F', 'F'], 'F':['i']}
+prod[start_dash] = start_symbol
+prod.update(productions)
+terminals = ['+', '*', 'i']
+non_terminals = ['E', 'T', 'F']"""
+print("------------------------------------------------------------------------------\n")
+print("Terminals : ", terminals)
+print("Non Terminals : ", non_terminals)
+print("Productions : ", prod)
+print("------------------------------------------------------------------------------\n")
+print("GOTO : \n")
+lritems()
+print("------------------------------------------------------------------------------\n")
+#gramR = {'F':['i'],'T': ['T*F', 'F'],'E': ['E+T', 'T']}
+gramR = {'C': ['cC', 'd'], 'S': ['CC']}
+first_dict = first(gramR)
+print("First")
+for nonterm in first_dict:
+  print(nonterm," --------- ",first_dict[nonterm])
+print("------------------------------------------------------------------------------\n")
+follow_dict = findFollow(start_symbol, productions, first_dict)
+print("Follow")
+for nonterm in follow_dict:
+  print(nonterm," --------- ",follow_dict[nonterm])
+print("------------------------------------------------------------------------------\n")
+print("SLR TABLE : ")
+find_slr_table()
+print("states",end=" ")
+for i in terminals:
+    print(i,end=" ")
+print("$",end=" ")
+for i in non_terminals:
+  print(i,end=" ")
+print("\n")
+for state in slr_table:
+  print(state,end="  ")
+  for action in slr_table[state]:
+    print(slr_table[state][action],end=" ")
+  print("\n")
+
+'''#slr parser
+
+from collections import defaultdict
+
+prod=defaultdict(list)
+start_symbol=""
+terminals=[]
+non_terminals=[]
+aug_gram=""
+states=defaultdict(list)
+first_dict=defaultdict(list)
+follow_dict=defaultdict(list)
+goto_table=defaultdict(dict)
+slr_table=defaultdict(dict)
+first_episolon_flag=0
+first_local_episolon_flag=0
+
+
+def first(dict):
+  new=defaultdict(list)
+
+  for k,v in dict.items():
+    for i in v:
+      if not i[0].isupper():
+        new[k].append(i[0])
+      else:
+        if i[0] in new:
+          new[k].extend(new[i[0]])
+  return new
+
+def isNonTerminal(V : str) :
+    return V.isupper()
+
+def follow(start,d,first):
+  follow=defaultdict(list)
+  follow[start]=['$']
+
+  tobedone=[]
+
+  for k,v in  d.items():
+    for p in v:
+
+      ind=0
+      while ind<len(p):
+
+        if isNonTerminal(p[ind]):
+
+          if ind+1<len(p):
+
+            if not isNonTerminal(p[ind+1]):
+              follow[p[ind]]+=[p[ind+1]]
+              follow[p[ind]]=list(set(follow[p[ind]]))
+            else:
+              follow[p[ind]]+=first[p[ind+1]]
+              follow[p[ind]]=list(set(follow[p[ind]]))
+
+              if '╬╡' in first[p[ind+1]]:
+                if k in follow:
+                  follow[p[ind]] += follow[k]
+                  follow[p[ind]] = list(set(follow[p[ind]]))
+                  tobedone += [[k, p[ind]]]
+
+          else:
+            if k in follow:
+              follow[p[ind]] += follow[k]
+              follow[p[ind]] = list(set(follow[p[ind]]))
+              tobedone += [[k, p[ind]]]
+
+        ind+=1
+  for l in tobedone :
+    follow[l[1]]+=follow[l[0]]
+    follow[l[1]]=list(set(follow[l[1]]))
+
+    if '╬╡' in follow[l[1]] :
+      follow[l[1]].remove('╬╡')
+
+
+  return follow
+
+
+def closure(productions):
+  set_i=[]
+  for production in productions:
+    set_i.append(production)
+  i=0
+  while i < len(set_i):
+      production=set_i[i]
+      i+=1
+      split=production.split("->")
+      rhs=split[1]
+      if "." in rhs:
+        dot_index=rhs.index(".")
+        if production not in set_i:
+          set_i.append(production)
+        if dot_index+1 < len(rhs) and rhs[dot_index+1] in non_terminals:
+          nonterm=rhs[dot_index+1]
+          for prod_rhs in prod[nonterm]:
+            prod_new=nonterm+"->."+prod_rhs
+            if prod_new not in set_i:
+              set_i.append(prod_new)
+
+  return set_i
+
+def goto(item,gram_symbol):
+    productions=[]
+    for production in item:
+       split=production.split("->")
+       rhs=split[1]
+       if "." in rhs:
+         dot_index=rhs.index(".")
+         if dot_index+1 < len(rhs) and rhs[dot_index+1]==gram_symbol:
+            new_production=production.replace("."+gram_symbol,gram_symbol+".")
+            productions.append(new_production)
+    if len(productions)>0:
+      return closure(productions)
+    return productions
+
+def lritems():
+  aug_gram_start=aug_gram.replace("->","->.")
+  c=closure([aug_gram_start])
+  states["0"]=c
+  i=0
+  while i < len(states.keys()):
+      item = states[str(i)]
+      for nonterm in non_terminals:
+        goto_list=goto(item,nonterm)
+        goto_table[str(i)][nonterm]="-"
+        if len(goto_list)>0 and  goto_list not in list(states.values()):
+          state_no=len(states.keys())
+          states[str(state_no)]=goto_list
+        if len(goto_list)>0:
+          state_no_goto_list=str(list(states.values()).index(goto_list))
+          print("goto(",str(i),",",nonterm,")  ---------  ",state_no_goto_list," ----- ",goto_list)
+          goto_table[str(i)][nonterm]=state_no_goto_list
+      for term in terminals:
+        goto_list=goto(item,term)
+        goto_table[str(i)][term]="-"
+        if len(goto_list)>0 and  goto_list not in list(states.values()):
+          state_no=len(states.keys())
+          states[str(state_no)]=goto_list
+        if len(goto_list)>0:
+          state_no_goto_list=str(list(states.values()).index(goto_list))
+          print("goto(",str(i),",",term,")  ---------  ",state_no_goto_list," ----- ",goto_list)
+          goto_table[str(i)][term]=state_no_goto_list
+      i+=1
+  print("\n\n\n\n")
+  for state in states:
+    print(state,"---------",states[state])
+
+def find_slr_table():
+    for state in states:
+      for i in terminals:
+        slr_table[state][i]="-"
+      slr_table[state]["$"]="-"
+      for i in non_terminals:
+        slr_table[state][i]="-"
+      for item in states[state]:
+          split=item.split("->")
+          lhs=split[0]
+          rhs=split[1]
+          if "." in rhs:
+            dot_index=rhs.index(".")
+            if dot_index+1 < len(rhs):
+               if rhs[dot_index+1] in non_terminals:
+                  nonterm=rhs[dot_index+1]
+                  slr_table[state][nonterm] = goto_table[state][nonterm]
+               elif rhs[dot_index+1] in terminals:
+                  term=rhs[dot_index+1]
+                  if goto_table[state][term]:
+                    slr_table[state][term] ="Shift:"+goto_table[state][term]
+                  else:
+                    slr_table[state][term]=goto_table[state][term]
+            if dot_index+1==len(rhs):
+              if item == aug_gram+".":
+                slr_table[state]["$"]="ACCEPT"
+              else:
+                for follow in follow_dict[lhs]:
+                  slr_table[state][follow]="Reduce:"+item.replace(".","")
+
+file = open("grammar1.txt","r")
+
+for line in file:
+  print(line)
+  strip=line.strip()
+  if "start" in strip:
+     split=strip.split()
+     start_symbol=split[1]
+     start_dash=start_symbol+"d"
+
+     prod[start_dash]=start_symbol
+     aug_gram=start_dash+"->"+start_symbol
+     continue
+  if "terminals" in strip:
+    split=strip.split()
+    terminals=split[1:]
+    continue
+  split=strip.split("->")
+  prod[split[0]].append(split[1])
+  if split[0] not in non_terminals:
+    non_terminals.append(split[0])
+
+
+g={
+
+   'F':['i'],
+   'T':['T*F','F'],
+   'E':['E+T','T'],
+   'Ed':['E']
+}
+
+print(terminals)
+print(non_terminals)
+print(prod)
+print("\n\n\n\n")
+lritems()
+first_dict=first(g)
+print("\n\n\n\n")
+print("First")
+print(first_dict)
+follow_dict=follow(start_symbol,prod,first_dict)
+print("\n\n\n\n")
+print("Follow")
+print(follow_dict)
+print("\n\n\n\n")
+find_slr_table()
+print("states",end=" ")
+for i in terminals:
+    print(i,end=" ")
+print("$",end=" ")
+for i in non_terminals:
+  print(i,end=" ")
+print("\n")
+for state in slr_table:
+  print(state,end="  ")
+  for action in slr_table[state]:
+    print(slr_table[state][action],end=" ")
+  print("\n")
+
+
+#slr_table.txt and grammar1.txt file'''
+
+--------------------------------------------------------------
+--------------------------------------------------------------
+
+
+#Q3) Intermediate code generation
+#works only for binary operators
+
+from collections import *
+from prettytable import PrettyTable
+
+class Node:
+  def __init__(self, value=None, left=None, right=None, next=None):
+    self.value=value
+    self.left=left
+    self.right=right
+    self.next=next
+
+
+class Stack:
+  def __init__(self):
+    self.top=None
+
+  def push(self, node):
+    if not self.top : #stack is empty
+      self.top=node
+
+    else:
+      node.next=self.top
+      self.top=node
+
+  def pop(self):
+
+    if not self.top: #stack is empty
+      print("stack is empty!")
+
+    else:
+      popped=self.top
+      self.top=self.top.next
+      return popped
+
+class SyntaxTree:
+  def inorder(self, p):
+    if (not p):
+      return
+    self.inorder(p.left)
+    print(p.value,end="\t")
+    self.inorder(p.right)
+
+#expr = input("Enter the arithmetic expression with brackets: ")
+expr="((a+b)*(a-b))"
+print("INPUT EXPRESSION: ", expr)
+print("\n\n")
+
+stack = []
+postfix = []
+
+precedence={'*':2,"/":2,"+":1,"-":1}
+
+
+#infix to postfix conversion:
+
+for i in range(len(expr)):
+    if (expr[i] == '('):
+        stack.append(expr[i])
+
+    elif (expr[i].isalpha()):
+        postfix.append(expr[i])
+
+    elif ((expr[i] in list(precedence.keys())) and stack[-1] == '('):
+        stack.append(expr[i])
+
+    elif (expr[i] in list(precedence.keys()) and stack[-1] in list(precedence.keys())):
+        if (precedence[expr[i]] > precedence[stack[-1]]):
+            stack.append(expr[i])
+        else:
+            while (len(stack) and stack[-1] != '(' and stack[-1] != ')' and precedence[expr[i]] <= precedence[stack[-1]]):
+                postfix += stack.pop()
+            stack.append(expr[i])
+
+    elif (expr[i] == ')'):
+        if len(stack) != 0:
+            while (True):
+                elt = stack.pop()
+                if (elt == '('):
+                    break
+                else:
+                    postfix += elt
+
+print("POSTFIX NOTATION: ", postfix)
+
+operators=['+','*','/','-']
+
+#Syntax tree construction:
+tree_stack=Stack()
+syntax_tree=SyntaxTree()
+
+for c in postfix:
+  if c in operators:
+    operator=Node(c)
+    op2=tree_stack.pop()
+    op1=tree_stack.pop()
+    operator.left=op1
+    operator.right=op2
+    tree_stack.push(operator)
+
+  elif c.isalpha():
+    new_node=Node(c)
+    tree_stack.push(new_node)
+
+root=tree_stack.pop()
+
+print("\n\nSYNTAX TREE -> Inorder traversal:")
+syntax_tree.inorder(root)
+
+
+#intermediate code generation:
+
+for i in range(len(postfix)):
+  postfix[i]=str(postfix[i])
+
+temp_num=0
+code=defaultdict(list)
+i=0
+while(i<len(postfix)):
+  if(postfix[i] in operators):
+    left=postfix[i-2]
+    right=postfix[i-1]
+
+    lhs='T'+str(temp_num)
+    code[lhs].append(left)
+    code[lhs].append(postfix[i])
+    code[lhs].append(right)
+
+    temp_num+=1
+    postfix[i-2:i+1]="$"
+    i-=2
+    postfix[i]=lhs
+
+  i+=1
+
+print("\n\nIntermediate code: \n")
+for key in code:
+  print(key+" = "+" ".join(code[key]))
+  print("\n")
+
+
+#Quadruples:
+
+quadruple=PrettyTable(["Operator", "Argument 1", "Argument 2", "Result"])
+
+
+print("Quadruples: \n")
+for key in code:
+  rhs=code[key]
+  for i in range(len(rhs)):
+    if(rhs[i] in operators):
+      op1=rhs[i-1]
+      op2=rhs[i+1]
+
+      quadruple.add_row([rhs[i],op1,op2,key])
+
+print(quadruple)
+
+#Triples:
+
+triple = PrettyTable(["S_No","Operator", "Argument 1", "Argument 2"])
+print("\n\n")
+count=1
+serial_nos={}
+for c in list(code.keys()):
+  serial_nos[c]=count
+  count+=1
+
+print("Triples\n")
+
+count_str="1"
+for key in code:
+  rhs=code[key]
+  for i in range(len(rhs)):
+    if(rhs[i] in operators):
+      op1=rhs[i-1]
+      op2=rhs[i+1]
+
+      if(op1 in list(serial_nos.keys())):
+        op1=serial_nos[op1]
+
+      if(op2 in list(serial_nos.keys())):
+        op2=serial_nos[op2]
+
+      triple.add_row([count_str,rhs[i],op1,op2])
+      count_str=str(int(count_str)+1)
+
+
+print(triple)
+
+#in case of unary:
+# If an operator is the first thing in your expression,
+# or comes after another operator, or
+# comes after a left parenthesis, then it's an unary operator.
+
+#((a*b)+c)
