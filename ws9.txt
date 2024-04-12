@@ -672,6 +672,27 @@ for state in slr_table:
 
 
 #slr_table.txt and grammar1.txt file'''
+-----------------------------------------------------------
+grammar1.txt
+start E
+E->E+T
+E->T
+T->T*F
+T->F
+F->i
+terminals + * i
+------------------------------------------------------------
+slr_table.txt
+states + * i $ E T F
+0 - - Shift:4 - 1 2 3
+1 Shift:5 - - ACCEPT - - -
+2 Reduce:E->T Shift:6 - Reduce:E->T - - -
+3 Reduce:T->F Reduce:T->F - Reduce:T->F - - -
+4 Reduce:F->i Reduce:F->i - Reduce:F->i - - -
+5 - - Shift:4 - - 7 3
+6 - - Shift:4 - - - 8
+7 Reduce:E->E+T Shift:6 - Reduce:E->E+T - - -
+8 Reduce:T->T*F Reduce:T->T*F - Reduce:T->T*F - - -
 
 --------------------------------------------------------------
 --------------------------------------------------------------
