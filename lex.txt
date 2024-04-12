@@ -1,3 +1,9 @@
+TO RUN:
+flex add_line_numbers.l
+gcc lex.yy.c -o add_line_numbers -lfl
+./add_line_numbers
+---------------------------------------------------------
+---------------------------------------------------------
 A lex program which adds line numbers to the given file
 and displays the same onto the standard output
 %{
